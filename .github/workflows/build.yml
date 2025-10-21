@@ -1,0 +1,64 @@
+name: Build Quite OK Image
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    defaults:
+      run:
+        shell: msys2 {0}
+    runs-on: ${{matrix.os}}
+    strategy:
+      matrix:
+        include:
+          - os: windows-11-arm
+            ARTIFACT_PREFIX: winarm64
+            MSYS2_SYS: CLANGARM64
+          - os: windows-latest
+            ARTIFACT_PREFIX: win64
+            MSYS2_SYS: UCRT64
+    steps:
+      - name: 'Configure git: core.autocrlf, core.eol'
+        shell: pwsh
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+      - uses: actions/checkout@v5
+        with:
+          path: qoi
+      - uses: actions/checkout@v5
+        with:
+          repository: nothings/stb
+          path: stb
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{matrix.MSYS2_SYS}}
+          update: true
+          pacboy: toolchain:p
+      - name: Copy files
+        run: |
+          cp stb/stb_image.h qoi
+          cp stb/stb_image_write.h qoi
+      - name: Build qoiconv
+        run: |
+          cd qoi
+          if [ "$MSYSTEM" = "CLANGARM64" ]; then
+              clang qoiconv.c -std=gnu99 -lm -O3 -o qoiconv.exe
+          elif [ "$MSYSTEM" = "UCRT64" ]; then
+              gcc qoiconv.c -std=gnu99 -lm -O3 -o qoiconv.exe
+          fi
+      - name: Copy files
+        run: |
+          mkdir upload
+          cp qoi/LICENSE upload/license.txt
+          cp qoi/qoiconv.exe upload
+          strip upload/*.exe
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qoiconv-git-${{matrix.ARTIFACT_PREFIX}}-${{github.sha}}
+          path: upload
+          if-no-files-found: error

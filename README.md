@@ -1,3 +1,8 @@
+Quite OK Image (with unofficial binaries for Windows ARM64/AArch64 + x86-64, fork of [phoboslab/qoi](https://github.com/phoboslab/qoi)).  
+Downloads are hosted at the [releases](https://github.com/theinstantmatrix/qoi/releases) section.
+
+---
+
 ![QOI Logo](https://qoiformat.org/qoi-logo.svg)
 
 # QOI - The “Quite OK Image Format” for fast, lossless image compression
